@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Impossible IQ Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Inter:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        .comic-font {
+            font-family: 'Comic Neue', cursive;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom scrollbar for aesthetic */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-4">
+
+    <!-- Main Container -->
+    <div id="game-container" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden min-h-[500px] flex flex-col relative transition-all duration-300">
+        
+        <!-- Header -->
+        <div class="bg-slate-900 text-white p-4 flex justify-between items-center z-10">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fas fa-brain text-pink-500"></i>
+                <span>Super Genus IQ Test</span>
+            </h1>
+            <div id="progress-container" class="hidden items-center gap-2">
+                <span class="text-sm text-slate-400">Question:</span>
+                <span id="q-counter" class="font-mono text-pink-400 font-bold text-lg">1/20</span>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="flex-1 flex flex-col items-center justify-center p-8 text-center fade-in">
+            <div class="mb-6">
+                <i class="fas fa-graduation-cap text-6xl text-indigo-600 mb-4 block"></i>
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">Are you Smarter than a Rock?</h2>
+                <p class="text-slate-600">This test has been scientifically calibrated by people who wear lab coats. It is 100% accurate*.</p>
+                <p class="text-xs text-slate-400 mt-2">*Accuracy measured in imaginary units.</p>
+            </div>
+            
+            <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6 text-left w-full max-w-md">
+                <p class="font-bold">Rules:</p>
+                <ul class="list-disc ml-5 text-sm">
+                    <li>20 Questions.</li>
+                    <li>One mistake and you restart from the beginning.</li>
+                    <li>Logic is optional.</li>
+                </ul>
+            </div>
+
+            <button onclick="startGame()" class="group relative px-8 py-4 bg-indigo-600 text-white font-bold rounded-full shadow-lg hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95">
+                Start the Suffering
+                <span class="absolute right-[-10px] top-[-10px] bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-bounce">Free!</span>
+            </button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="hidden flex-1 flex flex-col p-6 fade-in">
+            <div class="flex-1 flex flex-col justify-center">
+                <h3 id="question-text" class="text-2xl md:text-3xl font-bold text-slate-800 text-center mb-8">
+                    Question goes here?
+                </h3>
+                
+                <div id="options-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Options injected via JS -->
+                </div>
+            </div>
+            
+            <div class="mt-8 bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                <div id="progress-bar" class="bg-pink-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Game Over Modal (Overlay) -->
+        <div id="game-over-modal" class="hidden absolute inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+            <i class="fas fa-dizzy text-6xl text-red-500 mb-4"></i>
+            <h2 class="text-4xl font-black text-white mb-2 comic-font">FAIL!</h2>
+            <p class="text-xl text-red-300 mb-6">Your IQ has been calculated: <span class="font-bold text-white">Room Temperature</span></p>
+            
+            <div class="bg-slate-800 p-4 rounded-lg mb-8 max-w-md w-full border border-slate-700">
+                <p class="text-slate-400 text-sm uppercase tracking-wider mb-1">Why you failed:</p>
+                <p id="fail-reason" class="text-white font-medium italic">"Because you chose the logical answer, nerd."</p>
+            </div>
+
+            <button onclick="restartGame()" class="px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-colors flex items-center gap-2">
+                <i class="fas fa-redo"></i> Try Again (From Start)
+            </button>
+        </div>
+
+        <!-- Success Screen -->
+        <div id="success-screen" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center fade-in">
+            <i class="fas fa-crown text-6xl text-yellow-400 mb-4 animate-bounce"></i>
+            <h2 class="text-4xl font-bold text-slate-800 mb-2">GENIUS DETECTED</h2>
+            <p class="text-lg text-slate-600 mb-6">You have survived the nonsense.</p>
+            
+            <div class="bg-green-100 border border-green-300 p-6 rounded-xl mb-8 w-full max-w-md">
+                <h3 class="text-green-800 font-bold text-xl mb-2">Final Score</h3>
+                <div class="text-5xl font-black text-green-600 comic-font">9001 IQ</div>
+                <p class="text-sm text-green-700 mt-2">(It's over 9000!)</p>
+            </div>
+
+            <button onclick="restartGame()" class="text-indigo-600 hover:text-indigo-800 font-semibold underline">
+                Play again?
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // The Absurd Data Set
+        const questions = [
+            {
+                text: "What is 1 + 1?",
+                options: ["2", "11", "No", "Window"],
+                correct: 2, // Index of 'No'
+                failMessage: "Math is a social construct. 1+1 implies you have two things, but possession is an illusion. The answer is obviously a refusal to participate."
+            },
+            {
+                text: "Which of these is a fruit?",
+                options: ["Tomato", "A Honda Civic", "The concept of time", "Carrot"],
+                correct: 1, // Honda Civic
+                failMessage: "Tomatoes are biologically berries, but a Honda Civic is the fruit of labor. Think deeper."
+            },
+            {
+                text: "What is the capital of France?",
+                options: ["Paris", "F", "Baguette", "The Moon"],
+                correct: 1, // F
+                failMessage: "Paris is a city. 'F' is the capital letter of the word 'France'. Literacy is important."
+            },
+            {
+                text: "Complete the sequence: A, B, C, ...",
+                options: ["D", "Cookie", "E", "Ddddd"],
+                correct: 1, // Cookie
+                failMessage: "You clearly never watched Sesame Street. C is for Cookie."
+            },
+            {
+                text: "What color is a mirror?",
+                options: ["Silver", "Green", "Whatever you are", "Clear"],
+                correct: 1, // Green
+                failMessage: "Science fact: Mirrors actually reflect slightly more green light than other colors. This is an IQ test, not a common sense test."
+            },
+            {
+                text: "Stop the bus!",
+                options: ["STOP", "Wait", "Don't click this", "Press me"],
+                correct: 2, // Don't click this
+                failMessage: "You can't stop a bus by clicking a button on a screen. By not clicking the action buttons, you acknowledged the futility of the request."
+            },
+            {
+                text: "Which number is the biggest?",
+                options: ["100", "Five", "Infinity", "10"],
+                correct: 3, // 10 (If rendered with huge font size, but logic here is rigging)
+                failMessage: "I meant physically biggest on the screen, but since all font sizes are the same, 10 is the biggest because 1+0=1, and 1 is the loneliest number, which carries the most emotional weight."
+            },
+            {
+                text: "How many holes does a straw have?",
+                options: ["One", "Two", "Zero", "It's a tunnel"],
+                correct: 0, // One
+                failMessage: "Topologically speaking, a straw is a torus. It has exactly one through-hole. Don't overthink it (or underthink it)."
+            },
+            {
+                text: "Do you exist?",
+                options: ["Yes", "No", "404 Error", "Maybe"],
+                correct: 2, // 404 Error
+                failMessage: "This is a website. You are a user. In the context of this HTML file, you are merely a request. 404: Soul Not Found."
+            },
+            {
+                text: "Quick! Click the answer!",
+                options: ["The Answer", "The Question", "Click me", "Blue"],
+                correct: 0, // The Answer
+                failMessage: "I literally told you to click 'the answer'. Why did you click something else?"
+            },
+            {
+                text: "What sound does a dog make?",
+                options: ["Woof", "Bark", "Meow", "Tax Fraud"],
+                correct: 3, // Tax Fraud
+                failMessage: "You haven't met my dog. He's currently wanted by the IRS for offshore accounts in the Caymans."
+            },
+            {
+                text: "Divide 30 by half and add 10.",
+                options: ["25", "70", "40", "Potato"],
+                correct: 1, // 70
+                failMessage: "30 divided by 0.5 (half) is 60. Plus 10 is 70. This was actually a real math question. Gotcha."
+            },
+            {
+                text: "Which is the odd one out?",
+                options: ["Apple", "Banana", "The Eiffel Tower", "Grape"],
+                correct: 0, // Apple
+                failMessage: "Bananas are curved. The Eiffel Tower is pointy. Grapes are round. Apples... keep doctors away. That makes them a medical device, not an object."
+            },
+            {
+                text: "Are you asleep?",
+                options: ["Yes", "No", "[Silence]", "Zzz"],
+                correct: 2, // [Silence]
+                failMessage: "If you were asleep, you couldn't say 'Yes', 'No', or type 'Zzz'. Silence is the only truth."
+            },
+            {
+                text: "Spell 'Ghost' out loud.",
+                options: ["G-H-O-S-T", "Poltergeist", "Toast", "Correctly"],
+                correct: 3, // Correctly
+                failMessage: "I asked you to spell it, not to transcribe the letters. The correct way to spell is 'Correctly'."
+            },
+            {
+                text: "Where is the ocean?",
+                options: ["On the map", "In the wet part", "Under the boat", "Left"],
+                correct: 1, // In the wet part
+                failMessage: "Maps are dry. Boats can be in dry dock. Left is relative. The ocean is fundamentally defined by being the wet part."
+            },
+            {
+                text: "Can a match box?",
+                options: ["Yes", "No", "Only on Tuesdays", "No, but a tin can"],
+                correct: 3, // No, but a tin can
+                failMessage: "It's a classic pun. A match cannot box, but a tin CAN. Humor is a sign of intelligence."
+            },
+            {
+                text: "What follows December 31st?",
+                options: ["January 1st", "The End", "December 32nd", "A hangover"],
+                correct: 1, // The End
+                failMessage: "I meant the text 'December 31st'. The thing that follows it is 'The End' of the sentence."
+            },
+            {
+                text: "Click the blue button.",
+                options: ["Red", "Green", "Blue", "Cyan"],
+                correct: 0, // Red (We will style it blue via JS)
+                failMessage: "I changed the CSS colors when you weren't looking. You should trust your eyes, not the labels."
+            },
+            {
+                text: "Did you pass this test?",
+                options: ["Yes", "No", "Maybe", "I am a genius"],
+                correct: 1, // No
+                failMessage: "Humility is the ultimate sign of wisdom. Assuming you passed before seeing the score is a failing mark."
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+
+        // DOM Elements
+        const screens = {
+            start: document.getElementById('start-screen'),
+            quiz: document.getElementById('quiz-screen'),
+            success: document.getElementById('success-screen')
+        };
+        const container = document.getElementById('game-container');
+        const progressContainer = document.getElementById('progress-container');
+        const qCounter = document.getElementById('q-counter');
+        const questionText = document.getElementById('question-text');
+        const optionsGrid = document.getElementById('options-grid');
+        const progressBar = document.getElementById('progress-bar');
+        const gameOverModal = document.getElementById('game-over-modal');
+        const failReasonText = document.getElementById('fail-reason');
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            switchScreen('quiz');
+            progressContainer.classList.replace('hidden', 'flex');
+            loadQuestion();
+        }
+
+        function switchScreen(screenName) {
+            Object.values(screens).forEach(el => el.classList.add('hidden'));
+            screens[screenName].classList.remove('hidden');
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestionIndex];
+            
+            // Reset state
+            container.classList.remove('shake');
+            
+            // Update UI
+            qCounter.innerText = `${currentQuestionIndex + 1}/${questions.length}`;
+            const progressPercent = ((currentQuestionIndex) / questions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            
+            questionText.innerText = q.text;
+            
+            // Clear old options
+            optionsGrid.innerHTML = '';
+
+            // Create new options
+            q.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full p-4 text-lg font-semibold bg-white border-2 border-indigo-100 rounded-xl shadow-sm hover:border-indigo-500 hover:bg-indigo-50 hover:shadow-md transition-all active:scale-95 text-slate-700';
+                
+                // Special logic for Q19 (Color trick)
+                if (currentQuestionIndex === 18) {
+                   if(optText === "Red") {
+                       btn.innerText = "Red";
+                       btn.style.color = "blue"; // The label says Red, but text is blue.
+                       // Wait, let's make the BUTTON blue but label Red.
+                       btn.className = 'w-full p-4 text-lg font-bold text-white bg-blue-500 rounded-xl shadow-sm hover:opacity-90 transition-all';
+                   } else if (optText === "Blue") {
+                       btn.className = 'w-full p-4 text-lg font-bold text-white bg-red-500 rounded-xl shadow-sm hover:opacity-90 transition-all';
+                   }
+                }
+                
+                btn.innerText = optText;
+                btn.onclick = () => handleAnswer(index);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function handleAnswer(selectedIndex) {
+            const q = questions[currentQuestionIndex];
+            
+            if (selectedIndex === q.correct) {
+                // Correct!
+                currentQuestionIndex++;
+                if (currentQuestionIndex >= questions.length) {
+                    winGame();
+                } else {
+                    loadQuestion();
+                }
+            } else {
+                // Wrong!
+                triggerFail(q.failMessage);
+            }
+        }
+
+        function triggerFail(reason) {
+            // Shake effect
+            container.classList.add('shake');
+            
+            // Show modal
+            failReasonText.innerText = `"${reason}"`;
+            gameOverModal.classList.remove('hidden');
+            gameOverModal.classList.add('fade-in');
+        }
+
+        function restartGame() {
+            gameOverModal.classList.add('hidden');
+            currentQuestionIndex = 0;
+            progressBar.style.width = '0%';
+            switchScreen('start');
+            progressContainer.classList.add('hidden');
+        }
+
+        function winGame() {
+            switchScreen('success');
+            progressBar.style.width = '100%';
+            progressContainer.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
